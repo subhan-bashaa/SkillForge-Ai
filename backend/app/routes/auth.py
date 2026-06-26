@@ -19,14 +19,33 @@ auth_bp = Blueprint(
 )
 
 
+import logging
+from sqlalchemy import exc
+
+# Configure basic logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 @auth_bp.route("/register", methods=["POST"])
 def register():
+    # Safely log database engine URL (hiding password)
+    engine_url = str(db.engine.url)
+    safe_url = engine_url
+    if "@" in engine_url:
+        # e.g., postgresql+psycopg2://user:pass@host/db -> postgresql+psycopg2://user:***@host/db
+        prefix = engine_url.split(":")[0] + ":" + engine_url.split(":")[1] + ":***@"
+        safe_url = prefix + engine_url.split("@")[1]
+    logger.info(f"Database Engine URL: {safe_url}")
 
     data = request.get_json()
+    logger.info("Incoming register request received.")
 
     name = data.get("name")
     email = data.get("email")
     password = data.get("password")
+    
+    if email:
+        logger.info(f"Email received: {email}")
 
     if not all([name, email, password]):
         return {
@@ -54,7 +73,16 @@ def register():
     )
 
     db.session.add(user)
-    db.session.commit()
+    
+    try:
+        db.session.commit()
+        logger.info("db.session.commit() successful.")
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"db.session.commit() failed: {str(e)}")
+        return {
+            "message": f"Database commit failed: {str(e)}"
+        }, 500
 
     return {
         "message": "User registered successfully"
