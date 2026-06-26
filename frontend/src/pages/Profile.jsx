@@ -80,7 +80,7 @@ export default function Profile() {
     certDoc += `Earned on: ${cert.completed_at}\n`;
     certDoc += `Credential Verification Identifier: ${cert.credential_id}\n\n`;
     certDoc += `========================================================================\n`;
-    certDoc += `Verified by SkillForge AI Core Engine. Sync ID: SQLITE-${cert.id}\n`;
+    certDoc += `Verified by SkillForge AI Core Engine. Sync ID: PG-${cert.id}\n`;
     certDoc += `========================================================================\n`;
 
     const blob = new Blob([certDoc], { type: 'text/plain' });

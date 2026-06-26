@@ -482,7 +482,7 @@ export default function CourseDetails() {
                 {activeTab === 'selfNote' && (
                   <div className="space-y-4">
                     <h4 className="font-bold text-white text-sm">Study Journal Notes</h4>
-                    <p className="text-xs text-slate-550">Write summaries or draft snippet questions during study. Notes sync automatically to SQLite.</p>
+                    <p className="text-xs text-slate-550">Write summaries or draft snippet questions during study. Notes sync automatically to PostgreSQL.</p>
                     <textarea
                       value={selfNote}
                       onChange={(e) => setSelfNote(e.target.value)}

@@ -42,7 +42,7 @@ def generate_quiz():
         lesson_notes=lesson_notes
     )
 
-    # Save to SQLite
+    # Save to the database
     quiz = Quiz(
         course_id=course_id,
         lesson_id=lesson_id,

@@ -48,10 +48,9 @@ def create_app():
     app.register_blueprint(profile_bp)
     app.register_blueprint(bookmarks_bp)
 
-    # Import models and ensure tables are created
+    # Import models so Flask-Migrate can discover them.
     with app.app_context():
         from app import models
-        db.create_all()
 
     @app.route("/")
     def home():

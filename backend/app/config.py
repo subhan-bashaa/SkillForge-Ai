@@ -6,11 +6,13 @@ class Config:
 
     JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY")
 
-    db_url = os.getenv("DATABASE_URL", "sqlite:///skillforge.db")
+    db_url = os.getenv("DATABASE_URL")
+    if not db_url:
+        raise RuntimeError("DATABASE_URL is required and must point to a PostgreSQL database")
     if db_url.startswith("postgres://"):
-        db_url = db_url.replace("postgres://", "postgresql+pg8000://", 1)
+        db_url = db_url.replace("postgres://", "postgresql+psycopg2://", 1)
     elif db_url.startswith("postgresql://"):
-        db_url = db_url.replace("postgresql://", "postgresql+pg8000://", 1)
+        db_url = db_url.replace("postgresql://", "postgresql+psycopg2://", 1)
 
     SQLALCHEMY_DATABASE_URI = db_url
 

@@ -32,7 +32,7 @@ SkillForge AI is an AI-powered personalized learning platform that generates cus
 
 ### Backend
 - **Framework**: Flask (Python 3.10+)
-- **Database ORM**: SQLAlchemy with SQLite (local relational store)
+- **Database ORM**: SQLAlchemy with PostgreSQL (managed relational store)
 - **Authentication**: Flask-JWT-Extended (JWT access tokens)
 - **Database Migrations**: Flask-Migrate (Alembic wrappers)
 - **CORS Support**: Flask-Cors
@@ -68,10 +68,10 @@ graph TD
     end
 
     subgraph External [External Services & Database]
-        SQLite[(SQLite DB - Persistent/Local)]
+        PostgreSQL[(PostgreSQL DB)]
         Groq[Groq AI API - Llama 3.3]
         
-        Models --> SQLite
+        Models --> PostgreSQL
         Services -- SDK Calls (API Key) --> Groq
     end
     
@@ -94,10 +94,9 @@ SkillForge-AI/
 │   │   ├── utils/             # Helper Functions
 │   │   └── __init__.py        # App Factory Setup
 │   ├── migrations/            # Flask-Migrate Database History
-│   ├── instance/              # Local Database Store (SQLite)
+│   ├── instance/              # Runtime instance files
 │   ├── requirements.txt       # Python Dependencies (Flask, SQLAlchemy, Groq, gunicorn)
-│   ├── run.py                 # Backend Entrypoint (Development server)
-│   └── show_db.py             # Database inspection script
+│   └── run.py                 # Backend Entrypoint (Development server)
 ├── frontend/
 │   ├── public/                # Static public assets
 │   ├── src/
@@ -131,7 +130,7 @@ cp .env.example backend/.env
 Define the following variables inside `backend/.env`:
 - `SECRET_KEY`: A random string used for secure session cookie signing.
 - `JWT_SECRET_KEY`: A secure key used for signing JWT tokens.
-- `DATABASE_URL`: Connection string (Defaults to `sqlite:///skillforge.db`).
+- `DATABASE_URL`: PostgreSQL connection string, for example `postgresql://user:password@localhost:5432/skillforge`.
 - `GROQ_API_KEY`: Your official API key from Groq Console.
 - `CORS_ORIGIN`: Allowed origins for API requests (e.g., `https://your-frontend.vercel.app` or `*`).
 - `VITE_API_URL` (Optional): Production URL of the backend API for Vite client reference.
@@ -181,7 +180,7 @@ The client dashboard opens on **`http://localhost:5173`**.
 
 ## 🗄️ Database Design
 
-The relational database uses SQLite under SQLAlchemy management with the following tables:
+The relational database uses PostgreSQL under SQLAlchemy management with the following tables:
 
 1. **`users`**: Contains user info (`name`, `email`, encrypted `password`, `created_at`).
 2. **`courses`**: Contains generated roadmap courses (`title`, `goal`, `level`, `duration`, `learning_style`, JSON weekly/monthly milestones, relationships to user/modules/quizzes).

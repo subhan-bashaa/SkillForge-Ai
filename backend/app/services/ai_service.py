@@ -121,7 +121,7 @@ def get_course_fallback(goal, target_role, level, language, duration, daily_time
         projects = [{
             "title": f"Enterprise {goal} Platform",
             "description": f"Build a robust platform showcasing advanced paradigms of {goal}.",
-            "technologies": [goal, "SQLite"]
+            "technologies": [goal, "PostgreSQL"]
         }]
         resources = ["https://google.com"]
 
@@ -327,7 +327,7 @@ class AIService:
                 "title": f"Custom {skill_name} Portfolio Platform",
                 "difficulty": "Intermediate",
                 "description": f"Build a robust platform showcasing modular integrations of {skill_name}.",
-                "technologies": [skill_name, "SQLite", "React"],
+                "technologies": [skill_name, "PostgreSQL", "React"],
                 "features": ["Modular schemas", "Mock fallback API wrapper", "Dashboard metrics"]
             }
 

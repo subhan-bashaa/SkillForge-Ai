@@ -758,7 +758,7 @@ export default function Landing() {
                 </div>
                 <div className="flex items-center gap-2.5 bg-slate-950/60 p-2.5 rounded-xl border border-slate-800/60">
                   <FiDatabase className="text-cyan-400" />
-                  <span className="text-xs font-bold text-slate-100">SQLite</span>
+                  <span className="text-xs font-bold text-slate-100">PostgreSQL</span>
                 </div>
               </div>
             </div>

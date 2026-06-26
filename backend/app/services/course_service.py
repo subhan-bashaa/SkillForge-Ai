@@ -92,7 +92,7 @@ class CourseService:
             projects = [{
                 "title": f"Custom {goal.capitalize()} Compiler Platform",
                 "description": f"Build a system showcasing standard practices of {goal}.",
-                "technologies": [goal, "SQLite"]
+                "technologies": [goal, "PostgreSQL"]
             }]
             resources = [{
                 "title": f"Search Reference docs",
@@ -184,7 +184,7 @@ class CourseService:
             print("Groq course generation failed, invoking local fallback presets:", str(e))
             course_data = cls.get_local_fallback(goal, target_role, level, language, duration, daily_time, learning_style, notes)
 
-        # Save SQLite transaction
+        # Save course transaction
         try:
             # 1. Course Record
             course = Course(
@@ -267,5 +267,5 @@ class CourseService:
             return course.to_dict()
         except Exception as db_err:
             db.session.rollback()
-            print("SQLite Database save failed:", str(db_err))
+            print("Database save failed:", str(db_err))
             raise db_err
