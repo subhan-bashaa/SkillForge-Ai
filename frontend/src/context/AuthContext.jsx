@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../api';
 
 const AuthContext = createContext();
 
@@ -31,7 +31,7 @@ export function AuthProvider({ children }) {
   const login = async (email, password) => {
     try {
       // Make active request to Flask backend
-      const response = await axios.post('http://localhost:5000/api/auth/login', { email, password });
+      const response = await api.post('/api/auth/login', { email, password });
       
       const { token, user } = response.data;
       localStorage.setItem('jwt_token', token);
@@ -68,10 +68,9 @@ export function AuthProvider({ children }) {
     }
   };
 
-  // Register handler
   const register = async (name, email, password) => {
     try {
-      const response = await axios.post('http://localhost:5000/api/auth/register', { name, email, password });
+      const response = await api.post('/api/auth/register', { name, email, password });
       return { success: true, data: response.data };
     } catch (error) {
       console.warn('Backend connection failed, falling back to mock registration for preview mode.', error);
