@@ -30,6 +30,11 @@ class User(db.Model):
         server_default=db.func.now()
     )
 
+    last_login = db.Column(
+        db.DateTime,
+        nullable=True
+    )
+
     # Relationships
     analytics = db.relationship("UserAnalytics", back_populates="user", uselist=False, cascade="all, delete-orphan")
     courses = db.relationship("Course", back_populates="user", cascade="all, delete-orphan")

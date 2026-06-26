@@ -86,6 +86,11 @@ def login():
             "message": "Invalid credentials"
         }, 401
 
+    from datetime import datetime
+    user.last_login = datetime.utcnow()
+    from app import db
+    db.session.commit()
+
     access_token = create_access_token(
         identity=str(user.id)
     )
