@@ -29,7 +29,7 @@ def create_app():
 
     jwt.init_app(app)
 
-    migrate.init_app(app, db)
+    migrate.init_app(app, db, render_as_batch=True)
 
     # Import blueprints
     from app.routes.auth import auth_bp

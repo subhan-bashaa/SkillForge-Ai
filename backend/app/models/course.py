@@ -73,6 +73,7 @@ class Course(db.Model):
     monthly_milestones = db.Column(db.Text, default="[]")  # JSON string
     interview_questions = db.Column(db.Text, default="[]")  # JSON string
     learning_outcomes = db.Column(db.Text, default="[]")  # JSON string
+    prerequisites = db.Column(db.Text, default="[]")  # JSON string
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     # Relationships
@@ -120,6 +121,15 @@ class Course(db.Model):
     def set_interview_questions(self, value):
         self.interview_questions = json.dumps(value)
 
+    def get_prerequisites(self):
+        try:
+            return json.loads(self.prerequisites)
+        except Exception:
+            return []
+
+    def set_prerequisites(self, value):
+        self.prerequisites = json.dumps(value)
+
     def to_dict(self):
         # Calculate completion stats
         total_lessons = 0
@@ -155,6 +165,7 @@ class Course(db.Model):
             "weekly_plan": self.get_weekly_plan(),
             "monthly_milestones": self.get_monthly_milestones(),
             "interview_questions": self.get_interview_questions(),
+            "prerequisites": self.get_prerequisites(),
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "total_modules": len(self.modules),
             "total_lessons": total_lessons,

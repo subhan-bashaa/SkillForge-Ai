@@ -24,6 +24,7 @@ class CourseService:
                 "Describe the difference between server components (RSC) and client components."
             ]
             learning_outcomes = ["Design reactive interfaces", "Configure optimal page loaders", "Handle action states dynamically"]
+            prerequisites = ["Basic HTML/CSS", "JavaScript ES6+ Fundamentals"]
             
             modules = [
                 {
@@ -71,6 +72,7 @@ class CourseService:
                 "Explain memory management patterns."
             ]
             learning_outcomes = [f"Construct scalable applications using {goal}", "Implement diagnostic debugging benchmarks"]
+            prerequisites = ["General programming concepts"]
             
             modules = [
                 {
@@ -104,6 +106,7 @@ class CourseService:
             "description": description,
             "estimated_time": duration or "4 Weeks",
             "learning_outcomes": learning_outcomes,
+            "prerequisites": prerequisites,
             "weekly_plan": weekly_plan,
             "monthly_milestones": monthly_milestones,
             "interview_questions": interview_questions,
@@ -133,6 +136,7 @@ class CourseService:
           "description": "Brief description of the course",
           "estimated_time": "{duration}",
           "learning_outcomes": ["outcome 1", "outcome 2"],
+          "prerequisites": ["prerequisite 1", "prerequisite 2"],
           "weekly_plan": ["Week 1: ...", "Week 2: ..."],
           "monthly_milestones": ["Milestone 1: ..."],
           "interview_questions": ["Question 1", "Question 2"],
@@ -202,6 +206,7 @@ class CourseService:
                 estimated_time=course_data.get("estimated_time", duration)
             )
             course.set_learning_outcomes(course_data.get("learning_outcomes", []))
+            course.set_prerequisites(course_data.get("prerequisites", []))
             course.set_weekly_plan(course_data.get("weekly_plan", []))
             course.set_monthly_milestones(course_data.get("monthly_milestones", []))
             course.set_interview_questions(course_data.get("interview_questions", []))
@@ -269,3 +274,56 @@ class CourseService:
             db.session.rollback()
             print("Database save failed:", str(db_err))
             raise db_err
+
+    @classmethod
+    def generate_lesson_content(cls, lesson_id, user_id):
+        lesson = Lesson.query.join(Module).join(Course).filter(Lesson.id == lesson_id, Course.user_id == user_id).first()
+        if not lesson:
+            raise Exception("Lesson not found or unauthorized")
+
+        course = lesson.module.course
+        prompt = f"""
+        Generate deep, highly educational content for the following lesson:
+        Course Topic: {course.goal}
+        Module: {lesson.module.title}
+        Lesson Title: {lesson.title}
+        Target Audience Level: {course.level}
+
+        You MUST respond with a single JSON object having exactly this structure:
+        {{
+          "title": "Lesson Title",
+          "introduction": "Brief introduction",
+          "explanation": "A detailed 300-700 word explanation formatted beautifully in Markdown.",
+          "key_concepts": ["concept 1", "concept 2"],
+          "real_world_example": "A concrete real-world scenario (Markdown)",
+          "code_example": "A relevant code snippet or technical command example (Markdown)",
+          "practice_tasks": ["task 1", "task 2"],
+          "mini_project": "A small project idea related to this lesson (Markdown)",
+          "common_mistakes": ["mistake 1", "mistake 2"],
+          "interview_questions": ["question 1", "question 2"],
+          "mcqs": [
+            {{
+              "question": "The question text",
+              "options": ["A", "B", "C", "D"],
+              "correct_answer": "A",
+              "explanation": "Why A is correct"
+            }}
+          ],
+          "summary": "Brief summary",
+          "resources": ["Doc link 1", "YouTube link 2"]
+        }}
+        """
+        system_prompt = "You are a senior technical instructor. You generate rich, accurate, and deeply educational content in valid structured JSON."
+        
+        try:
+            res_text = GroqClient.chat_completion(
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": prompt}
+                ],
+                json_mode=True
+            )
+            content_data = json.loads(res_text.strip())
+            return content_data
+        except Exception as e:
+            raise Exception(f"Failed to generate lesson content: {str(e)}")

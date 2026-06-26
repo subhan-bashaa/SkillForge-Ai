@@ -248,3 +248,13 @@ def toggle_lesson_completion(lesson_id):
         "course_progress": lesson.module.course.to_dict()["completion_rate"],
         "user_xp": analytics.xp if 'analytics' in locals() else 0
     }), 200
+
+@course_bp.route("/lesson/<int:lesson_id>/content", methods=["GET"])
+@jwt_required()
+def generate_lesson_content(lesson_id):
+    user_id = int(get_jwt_identity())
+    try:
+        lesson_data = CourseService.generate_lesson_content(lesson_id, user_id)
+        return jsonify(lesson_data), 200
+    except Exception as e:
+        return jsonify({"message": str(e)}), 500
