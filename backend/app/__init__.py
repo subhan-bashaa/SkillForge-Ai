@@ -3,11 +3,13 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_jwt_extended import JWTManager
 from flask_cors import CORS
 from flask_migrate import Migrate
-from dotenv import load_dotenv
 import os
+from dotenv import load_dotenv
 
-load_dotenv()
-
+# Ensure we load the .env file from the backend directory regardless of cwd
+backend_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+env_path = os.path.join(backend_dir, '.env')
+load_dotenv(dotenv_path=env_path)
 db = SQLAlchemy()
 jwt = JWTManager()
 migrate = Migrate()

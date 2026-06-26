@@ -37,6 +37,22 @@ export default function Dashboard() {
       setAnalytics(analyticsRes.data);
     } catch (err) {
       console.error('Failed to sync dashboard indices:', err);
+      // Provide fallback data to prevent infinite loading screen
+      setCourses([]);
+      setAnalytics({
+        xp: 0,
+        streak: 0,
+        weekly_hours: { Mon: 0, Tue: 0, Wed: 0, Thu: 0, Fri: 0, Sat: 0, Sun: 0 },
+        activity_log: [],
+        active_paths: 0,
+        completed_modules: 0,
+        completed_lessons: 0,
+        total_lessons: 0,
+        quiz_attempts: 0,
+        productivity_score: 15,
+        heatmap: [],
+        badges: []
+      });
     } finally {
       setLoading(false);
     }
