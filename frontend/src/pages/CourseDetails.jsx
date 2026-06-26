@@ -474,6 +474,13 @@ export default function CourseDetails() {
                       </button>
                     </div>
 
+                    {/* Introduction */}
+                    {currentDeepContent.introduction && (
+                      <div className="bg-slate-900/40 border border-slate-800/80 p-5 rounded-2xl">
+                        <p className="text-slate-300 italic text-sm border-l-4 border-indigo-500 pl-4">{currentDeepContent.introduction}</p>
+                      </div>
+                    )}
+
                     {/* Main Explanation */}
                     <div className="prose prose-invert prose-indigo max-w-none bg-slate-900/30 p-6 md:p-8 rounded-2xl border border-slate-850/50 leading-relaxed text-sm">
                       <ReactMarkdown remarkPlugins={[remarkGfm]}>
@@ -571,7 +578,81 @@ export default function CourseDetails() {
                               </li>
                             ))}
                           </ul>
+                          </ul>
                         </div>
+                      </div>
+                    )}
+
+                    {/* Advanced Quizzes */}
+                    {currentDeepContent.mcqs && currentDeepContent.mcqs.length > 0 && (
+                      <div className="bg-slate-900/40 border border-slate-800/80 p-5 rounded-2xl space-y-6 mt-6">
+                        <h4 className="font-bold text-white text-sm uppercase tracking-wider flex items-center gap-1.5">
+                          <FiAward className="text-amber-500" /> Interactive Knowledge Check
+                        </h4>
+                        <div className="space-y-6">
+                          {currentDeepContent.mcqs.map((quiz, idx) => (
+                            <div key={idx} className="bg-slate-950 border border-slate-850 p-5 rounded-xl space-y-4">
+                              <p className="text-sm font-bold text-white"><span className="text-indigo-400 mr-2">Q{idx+1}.</span> {quiz.question}</p>
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                {quiz.options.map((opt, oIdx) => (
+                                  <div key={oIdx} className={`p-3 rounded-lg border text-xs cursor-pointer transition-colors ${opt === quiz.correct_answer ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-200' : 'bg-slate-900 border-slate-800 text-slate-400 hover:bg-slate-800'}`}>
+                                    {opt}
+                                  </div>
+                                ))}
+                              </div>
+                              <div className="mt-4 p-4 bg-indigo-500/10 border border-indigo-500/20 rounded-lg text-xs text-indigo-200">
+                                <strong className="text-indigo-400">Explanation:</strong> {quiz.explanation}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Interview Questions */}
+                    {currentDeepContent.interview_questions && currentDeepContent.interview_questions.length > 0 && (
+                      <div className="bg-slate-900/40 border border-slate-800/80 p-5 rounded-2xl space-y-4 mt-6">
+                        <h4 className="font-bold text-white text-sm uppercase tracking-wider flex items-center gap-2">
+                          <FiHelpCircle className="text-indigo-400" /> Interview Preparation
+                        </h4>
+                        <div className="space-y-3">
+                          {currentDeepContent.interview_questions.map((quest, idx) => (
+                            <div key={idx} className="bg-slate-950 border border-slate-850 p-4 rounded-xl flex gap-3 text-xs text-slate-300 leading-normal">
+                              <FiHelpCircle className="w-5 h-5 text-indigo-400 flex-shrink-0 mt-0.5" />
+                              <div>
+                                <strong className="text-white block font-bold mb-1">Question {idx + 1}</strong>
+                                {quest}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Summary */}
+                    {currentDeepContent.summary && (
+                      <div className="bg-slate-900/40 border border-slate-800/80 p-5 md:p-6 rounded-2xl mt-8">
+                        <h4 className="font-bold text-white text-sm uppercase tracking-wider mb-2 text-indigo-400">Summary</h4>
+                        <p className="text-slate-300 text-sm">{currentDeepContent.summary}</p>
+                      </div>
+                    )}
+                    
+                    {/* Additional Resources */}
+                    {currentDeepContent.resources && currentDeepContent.resources.length > 0 && (
+                      <div className="bg-slate-900/40 border border-slate-800/80 p-5 md:p-6 rounded-2xl space-y-4">
+                        <h4 className="font-bold text-white text-sm uppercase tracking-wider flex items-center gap-2">
+                          <FiHelpCircle className="text-blue-400" /> Recommended Resources
+                        </h4>
+                        <ul className="space-y-2">
+                          {currentDeepContent.resources.map((resUrl, idx) => (
+                            <li key={idx} className="text-xs md:text-sm text-blue-400 hover:text-blue-300">
+                              <a href={resUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2">
+                                <span className="w-1.5 h-1.5 bg-blue-500 rounded-full flex-shrink-0"></span>
+                                {resUrl}
+                              </a>
+                            </li>
+                          ))}
+                        </ul>
                       </div>
                     )}
                   </div>
@@ -597,31 +678,6 @@ export default function CourseDetails() {
                       </div>
                     )}
 
-                    {/* Advanced Quizzes */}
-                    {currentDeepContent?.mcqs && currentDeepContent.mcqs.length > 0 && (
-                      <div className="bg-slate-900/40 border border-slate-800/80 p-5 rounded-2xl space-y-6 mt-6">
-                        <h4 className="font-bold text-white text-sm uppercase tracking-wider flex items-center gap-1.5">
-                          <FiAward className="text-amber-500" /> Interactive Knowledge Check
-                        </h4>
-                        <div className="space-y-6">
-                          {currentDeepContent.mcqs.map((quiz, idx) => (
-                            <div key={idx} className="bg-slate-950 border border-slate-850 p-5 rounded-xl space-y-4">
-                              <p className="text-sm font-bold text-white"><span className="text-indigo-400 mr-2">Q{idx+1}.</span> {quiz.question}</p>
-                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                {quiz.options.map((opt, oIdx) => (
-                                  <div key={oIdx} className={`p-3 rounded-lg border text-xs cursor-pointer transition-colors ${opt === quiz.correct_answer ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-200' : 'bg-slate-900 border-slate-800 text-slate-400 hover:bg-slate-800'}`}>
-                                    {opt}
-                                  </div>
-                                ))}
-                              </div>
-                              <div className="mt-4 p-4 bg-indigo-500/10 border border-indigo-500/20 rounded-lg text-xs text-indigo-200">
-                                <strong className="text-indigo-400">Explanation:</strong> {quiz.explanation}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
                   </div>
                 )}
 
