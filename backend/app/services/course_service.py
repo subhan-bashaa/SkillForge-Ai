@@ -263,9 +263,9 @@ class CourseService:
             # 5. User Analytics updates
             analytics = UserAnalytics.query.filter_by(user_id=user_id).first()
             if not analytics:
-                analytics = UserAnalytics(user_id=user_id)
+                analytics = UserAnalytics(user_id=user_id, xp=0)
                 db.session.add(analytics)
-            analytics.xp += 150
+            analytics.xp = (analytics.xp or 0) + 150
             analytics.add_activity("Generated Roadmap", course.title)
 
             db.session.commit()
