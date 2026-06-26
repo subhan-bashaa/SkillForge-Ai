@@ -11,25 +11,34 @@ from datetime import datetime
 # Blueprint URL registered to /api/course (singular)
 course_bp = Blueprint("courses", __name__, url_prefix="/api/course")
 
+import logging
+import traceback
+
+logger = logging.getLogger(__name__)
+
 @course_bp.route("/generate", methods=["POST"])
 @jwt_required()
 def generate_course():
-    user_id = int(get_jwt_identity())
-    data = request.get_json() or {}
-    
-    goal = data.get("goal")
-    target_role = data.get("target_role") or data.get("role")
-    level = data.get("level") or data.get("difficulty") or "Intermediate"
-    language = data.get("language") or "English"
-    duration = data.get("duration") or "4 Weeks"
-    daily_time = data.get("daily_time") or data.get("daily_hours") or "1 Hour"
-    learning_style = data.get("learning_style") or "Practical"
-    notes = data.get("notes") or ""
-    
-    if not goal:
-        return jsonify({"message": "Goal is required"}), 400
-
     try:
+        user_id = int(get_jwt_identity())
+        data = request.get_json() or {}
+        
+        logger.info(f"[/generate] Request received for user_id={user_id}")
+        logger.info(f"[/generate] Request body: {data}")
+        goal = data.get("goal")
+        target_role = data.get("target_role") or data.get("role")
+        level = data.get("level") or data.get("difficulty") or "Intermediate"
+        language = data.get("language") or "English"
+        duration = data.get("duration") or "4 Weeks"
+        daily_time = data.get("daily_time") or data.get("daily_hours") or "1 Hour"
+        learning_style = data.get("learning_style") or "Practical"
+        notes = data.get("notes") or ""
+        
+        if not goal:
+            logger.warning("[/generate] Goal is missing from request")
+            return jsonify({"message": "Goal is required"}), 400
+
+        logger.info(f"[/generate] Calling CourseService.generate_and_save for goal='{goal}'")
         course_dict = CourseService.generate_and_save(
             user_id=user_id,
             goal=goal,
@@ -41,50 +50,61 @@ def generate_course():
             learning_style=learning_style,
             notes=notes
         )
+        logger.info("[/generate] Roadmap generated and saved successfully. Returning response.")
         return jsonify(course_dict), 201
     except Exception as e:
-        return jsonify({"message": "Failed to create roadmap", "details": str(e)}), 500
+        logger.error(f"[/generate] Exception occurred: {str(e)}")
+        traceback.print_exc()
+        return jsonify({"message": f"Failed to create roadmap: {str(e)}", "details": str(e)}), 500
 
 @course_bp.route("", methods=["GET"])
 @jwt_required()
 def get_courses():
-    user_id = int(get_jwt_identity())
-    
-    search = request.args.get("search", "")
-    level_filter = request.args.get("level", "")
-    sort_by = request.args.get("sort", "newest")
-    page = int(request.args.get("page", 1))
-    per_page = int(request.args.get("per_page", 8))
+    try:
+        user_id = int(get_jwt_identity())
+        logger.info(f"[/courses GET] Request received for user_id={user_id}")
+        
+        search = request.args.get("search", "")
+        level_filter = request.args.get("level", "")
+        sort_by = request.args.get("sort", "newest")
+        page = int(request.args.get("page", 1))
+        per_page = int(request.args.get("per_page", 8))
 
-    query = Course.query.filter_by(user_id=user_id)
+        query = Course.query.filter_by(user_id=user_id)
 
-    if search:
-        query = query.filter(Course.title.ilike(f"%{search}%"))
-    
-    if level_filter:
-        query = query.filter(Course.level == level_filter)
+        if search:
+            query = query.filter(Course.title.ilike(f"%{search}%"))
+        
+        if level_filter:
+            query = query.filter(Course.level == level_filter)
 
-    courses_list = query.all()
-    
-    if sort_by == "oldest":
-        courses_list.sort(key=lambda c: c.created_at)
-    elif sort_by == "progress":
-        courses_list.sort(key=lambda c: c.to_dict()["completion_rate"], reverse=True)
-    else: # newest
-        courses_list.sort(key=lambda c: c.created_at, reverse=True)
+        courses_list = query.all()
+        logger.info(f"[/courses GET] Found {len(courses_list)} courses for user_id={user_id}")
+        
+        if sort_by == "oldest":
+            courses_list.sort(key=lambda c: c.created_at or datetime.min)
+        elif sort_by == "progress":
+            courses_list.sort(key=lambda c: c.to_dict()["completion_rate"], reverse=True)
+        else: # newest
+            courses_list.sort(key=lambda c: c.created_at or datetime.min, reverse=True)
 
-    total = len(courses_list)
-    start_idx = (page - 1) * per_page
-    end_idx = start_idx + per_page
-    paginated_courses = courses_list[start_idx:end_idx]
+        total = len(courses_list)
+        start_idx = (page - 1) * per_page
+        end_idx = start_idx + per_page
+        paginated_courses = courses_list[start_idx:end_idx]
 
-    return jsonify({
-        "courses": [c.to_dict() for c in paginated_courses],
-        "total": total,
-        "page": page,
-        "per_page": per_page,
-        "pages": (total + per_page - 1) // per_page
-    }), 200
+        logger.info(f"[/courses GET] Returning {len(paginated_courses)} courses (Page {page})")
+        return jsonify({
+            "courses": [c.to_dict() for c in paginated_courses],
+            "total": total,
+            "page": page,
+            "per_page": per_page,
+            "pages": (total + per_page - 1) // per_page
+        }), 200
+    except Exception as e:
+        logger.error(f"[/courses GET] Exception occurred: {str(e)}")
+        traceback.print_exc()
+        return jsonify({"message": f"Failed to load courses: {str(e)}", "details": str(e)}), 500
 
 @course_bp.route("/<int:course_id>", methods=["GET"])
 @jwt_required()

@@ -5,6 +5,10 @@ from app.models.lesson import Lesson
 from app.models.analytics import UserAnalytics
 from app.services.groq_client import GroqClient
 import json
+import logging
+import traceback
+
+logger = logging.getLogger(__name__)
 
 class CourseService:
 
@@ -176,6 +180,7 @@ class CourseService:
         
         course_data = None
         try:
+            logger.info(f"[/generate] Sending request to Groq API for goal='{goal}'")
             res_text = GroqClient.chat_completion(
                 messages=[
                     {"role": "system", "content": system_prompt},
@@ -183,13 +188,20 @@ class CourseService:
                 ],
                 json_mode=True
             )
+            logger.info(f"[/generate] Received response from Groq API (length: {len(res_text)})")
+            logger.debug(f"[/generate] Groq Response Content: {res_text[:500]}...")
+            
             course_data = json.loads(res_text.strip())
+            logger.info("[/generate] Successfully parsed JSON from Groq response")
         except Exception as e:
-            print("Groq course generation failed, invoking local fallback presets:", str(e))
+            logger.error(f"[/generate] Groq course generation failed: {str(e)}")
+            traceback.print_exc()
+            logger.info("[/generate] Invoking local fallback presets")
             course_data = cls.get_local_fallback(goal, target_role, level, language, duration, daily_time, learning_style, notes)
 
         # Save course transaction
         try:
+            logger.info("[/generate] Starting database inserts")
             # 1. Course Record
             course = Course(
                 user_id=user_id,
@@ -268,11 +280,15 @@ class CourseService:
             analytics.xp = (analytics.xp or 0) + 150
             analytics.add_activity("Generated Roadmap", course.title)
 
+            logger.info("[/generate] All database inserts staged. Attempting commit.")
             db.session.commit()
+            logger.info("[/generate] Database commit successful.")
+            
             return course.to_dict()
         except Exception as db_err:
             db.session.rollback()
-            print("Database save failed:", str(db_err))
+            logger.error(f"[/generate] Database save failed: {str(db_err)}")
+            traceback.print_exc()
             raise db_err
 
     @classmethod
