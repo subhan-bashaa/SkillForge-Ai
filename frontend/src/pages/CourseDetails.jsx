@@ -578,7 +578,6 @@ export default function CourseDetails() {
                               </li>
                             ))}
                           </ul>
-                          </ul>
                         </div>
                       </div>
                     )}
