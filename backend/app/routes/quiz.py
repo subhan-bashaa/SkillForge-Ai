@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app import db
-from app.models.quiz import Quiz, QuizAttempt
+from app.models.quiz import QuizAttempt
 from app.models.course import Course
 from app.models.lesson import Lesson
 from app.models.user import User
@@ -16,98 +16,73 @@ quiz_bp = Blueprint("quiz", __name__, url_prefix="/api/quiz")
 def generate_quiz():
     user_id = int(get_jwt_identity())
     lesson_id = request.args.get("lesson_id", type=int)
-    course_id = request.args.get("course_id", type=int)
     
-    if not course_id and not lesson_id:
-        return jsonify({"message": "course_id or lesson_id is required"}), 400
+    if not lesson_id:
+        return jsonify({"message": "lesson_id is required"}), 400
 
-    lesson_title = "General Core Syllabus"
-    lesson_notes = ""
-    if lesson_id:
-        lesson = Lesson.query.get(lesson_id)
-        if not lesson or lesson.module.course.user_id != user_id:
-            return jsonify({"message": "Lesson not found or unauthorized"}), 404
-        lesson_title = lesson.title
-        lesson_notes = lesson.notes
-        course_id = lesson.module.course_id
+    lesson = Lesson.query.get(lesson_id)
+    if not lesson or lesson.module.course.user_id != user_id:
+        return jsonify({"message": "Lesson not found or unauthorized"}), 404
         
-        # Check if quiz already exists for this lesson
-        existing_quiz = Quiz.query.filter_by(lesson_id=lesson.id).first()
-        if existing_quiz:
-            return jsonify(existing_quiz.to_dict()), 200
+    course_title = lesson.module.course.title
+    module_title = lesson.module.title
+    lesson_title = lesson.title
 
     # Generate quiz questions using modular Groq service
-    quiz_questions = AIService.generate_quiz(
-        lesson_title=lesson_title,
-        lesson_notes=lesson_notes
+    quiz_data = AIService.generate_quiz(
+        course_title=course_title,
+        module_title=module_title,
+        lesson_title=lesson_title
     )
 
-    # Save to the database
-    quiz = Quiz(
-        course_id=course_id,
-        lesson_id=lesson_id,
-        title=f"Quiz: {lesson_title}"
-    )
-    quiz.set_questions(quiz_questions)
-    
-    db.session.add(quiz)
-    db.session.commit()
-    
-    return jsonify(quiz.to_dict()), 200
+    # Return directly without saving to DB
+    return jsonify(quiz_data), 200
 
 @quiz_bp.route("/submit", methods=["POST"])
 @jwt_required()
 def submit_quiz():
     user_id = int(get_jwt_identity())
     data = request.get_json() or {}
-    quiz_id = data.get("quiz_id")
-    answers = data.get("answers") # dict matching {question_id: user_answer}
     
-    quiz = Quiz.query.get(quiz_id)
-    if not quiz:
-        return jsonify({"message": "Quiz not found"}), 404
+    lesson_id = data.get("lesson_id")
+    score = data.get("score", 0.0)
+    percentage = data.get("percentage", 0.0)
+    correct_answers = data.get("correct_answers", 0)
+    wrong_answers = data.get("wrong_answers", 0)
+    
+    if not lesson_id:
+        return jsonify({"message": "lesson_id is required"}), 400
 
-    questions = quiz.get_questions()
-    correct_count = 0
-    total = len(questions)
-
-    for q in questions:
-        q_id = str(q.get("id"))
-        user_ans = str(answers.get(q_id, "")).strip().lower()
-        correct_ans = str(q.get("correct_answer")).strip().lower()
-        if user_ans == correct_ans:
-            correct_count += 1
-
-    score = round((correct_count / total) * 100, 1) if total > 0 else 0
+    lesson = Lesson.query.get(lesson_id)
+    if not lesson or lesson.module.course.user_id != user_id:
+        return jsonify({"message": "Lesson not found or unauthorized"}), 404
 
     attempt = QuizAttempt(
         user_id=user_id,
-        quiz_id=quiz.id,
+        lesson_id=lesson_id,
         score=score,
-        total_questions=total
+        percentage=percentage,
+        correct_answers=correct_answers,
+        wrong_answers=wrong_answers
     )
     db.session.add(attempt)
 
-    # Award XP relative to score
-    # e.g., 100% score = 100 XP + 50 bonus = 150 XP. Otherwise score * 1 XP.
-    xp_gain = int(score * 1.5)
+    # Award XP relative to percentage
+    xp_gain = int(percentage)
     analytics = UserAnalytics.query.filter_by(user_id=user_id).first()
     if not analytics:
         analytics = UserAnalytics(user_id=user_id)
         db.session.add(analytics)
     
     analytics.xp += xp_gain
-    analytics.add_activity("Passed Quiz", f"{quiz.title} (Score: {score}%)")
+    analytics.add_activity("Passed Quiz", f"{lesson.title} (Score: {percentage}%)")
     
     db.session.commit()
 
     return jsonify({
         "attempt_id": attempt.id,
-        "score": score,
-        "correct_count": correct_count,
-        "total_questions": total,
         "xp_gained": xp_gain,
-        "questions": questions # Return questions so client can show correct answers and explanations
+        "message": "Quiz attempt saved successfully"
     }), 201
 
 @quiz_bp.route("/attempts", methods=["GET"])

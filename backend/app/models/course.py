@@ -79,7 +79,6 @@ class Course(db.Model):
     # Relationships
     user = db.relationship("User", back_populates="courses")
     modules = db.relationship("Module", back_populates="course", cascade="all, delete-orphan", order_by="Module.order_no")
-    quizzes = db.relationship("Quiz", back_populates="course", cascade="all, delete-orphan")
     
     # Normalized relationship tables
     project_relationships = db.relationship("Project", back_populates="course", cascade="all, delete-orphan")

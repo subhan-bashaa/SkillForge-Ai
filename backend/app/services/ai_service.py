@@ -256,32 +256,37 @@ class AIService:
             return get_course_fallback(goal, target_role, level, language, duration, daily_time, learning_style)
 
     @staticmethod
-    def generate_quiz(lesson_title, lesson_notes):
+    def generate_quiz(course_title, module_title, lesson_title):
         prompt = f"""
-        Generate 3 diagnostic questions based on the lesson below.
+        Generate 10 multiple-choice diagnostic questions based on the lesson below.
+        Course: {course_title}
+        Module: {module_title}
         Lesson: {lesson_title}
-        Notes: {lesson_notes}
 
-        Output a single JSON object with a single key "questions" containing an array of 3 objects.
-        Do not wrap in markdown fences.
-        Each question object format:
+        You MUST output a single JSON object with the exact structure below. Do not wrap in markdown fences.
         {{
-          "id": 1,
-          "type": "mcq" or "true_false" or "fill_in_the_blank",
-          "question": "Question text?",
-          "options": ["Option A", "Option B", "Option C", "Option D"], // Only for MCQ or True/False
-          "correct_answer": "Option A or exact text word",
-          "explanation": "Detailed explanation of correct choice."
+          "title": "{lesson_title} Quiz",
+          "questions": [
+            {{
+              "question": "Question text here?",
+              "options": ["Option A", "Option B", "Option C", "Option D"],
+              "correct_answer": "Exact text of the correct option",
+              "explanation": "Detailed explanation of why the answer is correct."
+            }}
+          ]
         }}
         """
-        system_prompt = "You are an automated quiz test builder. You always output valid, structured JSON schemas."
+        system_prompt = "You are an automated technical quiz builder. You always output valid, structured JSON schemas and ensure the difficulty matches the context provided."
         try:
             res_text = call_groq_with_retry(prompt, system_prompt, json_mode=True)
             data = json.loads(res_text.strip())
-            return data.get("questions", data)
+            return data
         except Exception as e:
             print("Failed to generate quiz via Groq. Running local fallback.", str(e))
-            return get_quiz_fallback(lesson_title)
+            return {
+                "title": f"{lesson_title} Quiz",
+                "questions": get_quiz_fallback(lesson_title)
+            }
 
     @staticmethod
     def mentor_chat(user_message, course_title, message_history):

@@ -22,7 +22,7 @@ class Lesson(db.Model):
 
     # Relationships
     module = db.relationship("Module", back_populates="lessons")
-    quizzes = db.relationship("Quiz", back_populates="lesson", cascade="all, delete-orphan")
+    quiz_attempts = db.relationship("QuizAttempt", back_populates="lesson", cascade="all, delete-orphan")
 
     def get_resources(self):
         try:

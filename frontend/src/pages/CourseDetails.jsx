@@ -29,6 +29,7 @@ import {
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import useLessonStore from '../store/lessonStore';
+import LessonQuiz from '../components/LessonQuiz';
 
 export default function CourseDetails() {
   const { id } = useParams();
@@ -41,7 +42,7 @@ export default function CourseDetails() {
   // Active elements state
   const [activeLesson, setActiveLesson] = useState(null);
   const [openModules, setOpenModules] = useState({});
-  const [activeTab, setActiveTab] = useState('notes'); // notes, video, resources, selfNote, syllabus, projects, interview
+  const [activeTab, setActiveTab] = useState('notes'); // notes, video, resources, selfNote, syllabus, projects, interview, quiz
 
   // Note/Bookmark state
   const [selfNote, setSelfNote] = useState('');
@@ -404,6 +405,12 @@ export default function CourseDetails() {
                   className={`pb-3 border-b-2 transition-all cursor-pointer ${activeTab === 'interview' ? 'border-indigo-500 text-indigo-400' : 'border-transparent hover:text-white'}`}
                 >
                   <span className="flex items-center gap-1.5"><FiHelpCircle /> Interview Prep</span>
+                </button>
+                <button
+                  onClick={() => setActiveTab('quiz')}
+                  className={`pb-3 border-b-2 transition-all cursor-pointer ${activeTab === 'quiz' ? 'border-indigo-500 text-indigo-400' : 'border-transparent hover:text-white'}`}
+                >
+                  <span className="flex items-center gap-1.5"><FiCheckCircle /> AI Quiz</span>
                 </button>
               </div>
 
@@ -872,6 +879,15 @@ export default function CourseDetails() {
                         <p className="text-xs text-slate-500">No interview preparation files compiled.</p>
                       )}
                     </div>
+                  </div>
+                )}
+
+                {/* AI Quiz Tab */}
+                {activeTab === 'quiz' && (
+                  <div className="space-y-4">
+                    <h4 className="font-bold text-white text-sm">Test Your Knowledge</h4>
+                    <p className="text-xs text-slate-500">Take an AI-generated quiz to solidify your understanding of this lesson.</p>
+                    <LessonQuiz lessonId={activeLesson.id} />
                   </div>
                 )}
 
