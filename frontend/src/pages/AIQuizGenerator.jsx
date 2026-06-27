@@ -123,15 +123,43 @@ export default function AIQuizGenerator() {
   const handleSubmitQuiz = async () => {
     if (!quiz || submitting) return;
     setSubmitting(true);
+    
+    const questions = quiz?.questions || [];
+    let correctCount = 0;
+    
+    questions.forEach((q, idx) => {
+      const userAns = answers[idx];
+      if (userAns && userAns.trim().toLowerCase() === (q?.correct_answer ?? '').trim().toLowerCase()) {
+        correctCount += 1;
+      }
+    });
+
+    const total = questions.length;
+    const percentage = total > 0 ? (correctCount / total) * 100 : 0;
+    const wrongAnswers = total - correctCount;
+
     try {
       const res = await api.post('/api/quiz/submit', {
-        quiz_id: quiz.id,
-        answers: answers
+        lesson_id: selectedLessonId,
+        score: percentage,
+        percentage: percentage,
+        correct_answers: correctCount,
+        wrong_answers: wrongAnswers
       });
-      setQuizResult(res.data);
+      
+      setQuizResult({
+        percentage: Math.round(percentage),
+        score: Math.round(percentage), // for backward compatibility with AIQuizGenerator template
+        correct_count: correctCount,
+        wrong_answers: wrongAnswers,
+        total_questions: total,
+        xp_gained: res.data.xp_gained,
+        questions: questions
+      });
       fetchLeaderboard();
     } catch (err) {
-      alert('Submit failed.');
+      console.error("Quiz submission error:", err);
+      alert(err.response?.data?.error || 'Submit failed.');
     } finally {
       setSubmitting(false);
     }

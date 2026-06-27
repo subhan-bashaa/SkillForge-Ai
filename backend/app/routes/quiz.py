@@ -8,6 +8,7 @@ from app.models.user import User
 from app.models.analytics import UserAnalytics
 from datetime import datetime
 from app.services.ai_service import AIService
+import traceback
 
 quiz_bp = Blueprint("quiz", __name__, url_prefix="/api/quiz")
 
@@ -41,49 +42,67 @@ def generate_quiz():
 @quiz_bp.route("/submit", methods=["POST"])
 @jwt_required()
 def submit_quiz():
-    user_id = int(get_jwt_identity())
-    data = request.get_json() or {}
-    
-    lesson_id = data.get("lesson_id")
-    score = data.get("score", 0.0)
-    percentage = data.get("percentage", 0.0)
-    correct_answers = data.get("correct_answers", 0)
-    wrong_answers = data.get("wrong_answers", 0)
-    
-    if not lesson_id:
-        return jsonify({"message": "lesson_id is required"}), 400
+    try:
+        user_id = int(get_jwt_identity())
+        data = request.get_json() or {}
+        
+        print(f"--- QUIZ SUBMIT REQUEST ---")
+        print(f"User ID: {user_id}")
+        print(f"Payload: {data}")
+        
+        lesson_id = data.get("lesson_id")
+        score = data.get("score", 0.0)
+        percentage = data.get("percentage", 0.0)
+        correct_answers = data.get("correct_answers", 0)
+        wrong_answers = data.get("wrong_answers", 0)
+        
+        if not lesson_id:
+            print("Error: Missing lesson_id field")
+            return jsonify({"success": False, "error": "Missing lesson_id field"}), 400
 
-    lesson = Lesson.query.get(lesson_id)
-    if not lesson or lesson.module.course.user_id != user_id:
-        return jsonify({"message": "Lesson not found or unauthorized"}), 404
+        lesson = Lesson.query.get(lesson_id)
+        if not lesson:
+            print(f"Error: Lesson {lesson_id} not found")
+            return jsonify({"success": False, "error": "Lesson not found"}), 404
+            
+        if lesson.module.course.user_id != user_id:
+            print(f"Error: User {user_id} unauthorized for lesson {lesson_id}")
+            return jsonify({"success": False, "error": "Unauthorized to submit quiz for this lesson"}), 403
 
-    attempt = QuizAttempt(
-        user_id=user_id,
-        lesson_id=lesson_id,
-        score=score,
-        percentage=percentage,
-        correct_answers=correct_answers,
-        wrong_answers=wrong_answers
-    )
-    db.session.add(attempt)
+        attempt = QuizAttempt(
+            user_id=user_id,
+            lesson_id=lesson_id,
+            score=score,
+            percentage=percentage,
+            correct_answers=correct_answers,
+            wrong_answers=wrong_answers
+        )
+        db.session.add(attempt)
 
-    # Award XP relative to percentage
-    xp_gain = int(percentage)
-    analytics = UserAnalytics.query.filter_by(user_id=user_id).first()
-    if not analytics:
-        analytics = UserAnalytics(user_id=user_id)
-        db.session.add(analytics)
-    
-    analytics.xp += xp_gain
-    analytics.add_activity("Passed Quiz", f"{lesson.title} (Score: {percentage}%)")
-    
-    db.session.commit()
+        # Award XP relative to percentage
+        xp_gain = int(percentage)
+        analytics = UserAnalytics.query.filter_by(user_id=user_id).first()
+        if not analytics:
+            analytics = UserAnalytics(user_id=user_id)
+            db.session.add(analytics)
+        
+        analytics.xp += xp_gain
+        analytics.add_activity("Passed Quiz", f"{lesson.title} (Score: {percentage}%)")
+        
+        db.session.commit()
+        print("Quiz attempt saved successfully")
 
-    return jsonify({
-        "attempt_id": attempt.id,
-        "xp_gained": xp_gain,
-        "message": "Quiz attempt saved successfully"
-    }), 201
+        return jsonify({
+            "success": True,
+            "attempt_id": attempt.id,
+            "xp_gained": xp_gain,
+            "message": "Quiz attempt saved successfully"
+        }), 201
+
+    except Exception as e:
+        print("--- QUIZ SUBMISSION ERROR ---")
+        traceback.print_exc()
+        return jsonify({"success": False, "error": str(e)}), 500
 
 @quiz_bp.route("/attempts", methods=["GET"])
 @jwt_required()

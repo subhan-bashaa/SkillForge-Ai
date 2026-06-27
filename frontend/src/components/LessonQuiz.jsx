@@ -80,7 +80,8 @@ export default function LessonQuiz({ lessonId }) {
         xp_gained: res.data.xp_gained
       });
     } catch (err) {
-      alert('Submit failed.');
+      console.error("Quiz submission error:", err);
+      alert(err.response?.data?.error || 'Submit failed.');
     } finally {
       setSubmitting(false);
     }
