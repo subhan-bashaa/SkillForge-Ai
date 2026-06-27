@@ -150,7 +150,7 @@ export default function AIQuizGenerator() {
     report += `Detailed Review:\n`;
     
     (quizResult.questions || []).forEach((q, idx) => {
-      const userAns = answers[q?.id?.toString()] || 'Unanswered';
+      const userAns = answers[idx] || 'Unanswered';
       report += `${idx + 1}. Question: ${q?.question ?? 'N/A'}\n`;
       report += `   Your Answer: ${userAns}\n`;
       report += `   Correct Answer: ${q?.correct_answer ?? 'N/A'}\n`;
@@ -256,11 +256,11 @@ export default function AIQuizGenerator() {
                     {(!q?.type || q.type === 'mcq' || q.type === 'true_false') ? (
                       <div className="grid grid-cols-1 gap-2 pt-2">
                         {(q?.options || []).map((option, oIdx) => {
-                          const isSelected = answers[q?.id?.toString()] === option;
+                          const isSelected = answers[qIdx] === option;
                           return (
                             <button
                               key={oIdx}
-                              onClick={() => handleSelectAnswer(q?.id?.toString(), option)}
+                              onClick={() => handleSelectAnswer(qIdx, option)}
                               className={`w-full text-left px-4 py-3 border text-xs font-semibold rounded-xl cursor-pointer transition-colors ${
                                 isSelected
                                   ? 'bg-indigo-600/10 border-indigo-500 text-indigo-400'
@@ -277,8 +277,8 @@ export default function AIQuizGenerator() {
                       <div className="pt-2">
                         <input
                           type="text"
-                          value={answers[q?.id?.toString()] || ''}
-                          onChange={(e) => handleSelectAnswer(q?.id?.toString(), e.target.value)}
+                          value={answers[qIdx] || ''}
+                          onChange={(e) => handleSelectAnswer(qIdx, e.target.value)}
                           placeholder="Type answer here..."
                           className="w-full bg-slate-900 border border-slate-800 focus:border-indigo-500 rounded-xl px-4 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none transition-colors"
                         />
@@ -359,7 +359,7 @@ export default function AIQuizGenerator() {
               <div className="space-y-4">
                 <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest">Syllabus Explanations Review</h4>
                 {(quizResult.questions || []).map((q, idx) => {
-                  const userAns = answers[q?.id?.toString()] || 'Unanswered';
+                  const userAns = answers[idx] || 'Unanswered';
                   const isCorrect = userAns.trim().toLowerCase() === (q?.correct_answer ?? '').trim().toLowerCase();
                   return (
                     <div key={q?.id ?? idx} className="bg-slate-905/30 border border-slate-850 p-5 rounded-2xl space-y-3">
