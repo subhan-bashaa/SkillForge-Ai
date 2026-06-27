@@ -29,4 +29,4 @@ class QuizAttempt(db.Model):
             "correct_answers": self.correct_answers,
             "wrong_answers": self.wrong_answers,
             "completed_at": self.completed_at.isoformat() if self.completed_at else None
-        }
+        }   
