@@ -293,12 +293,16 @@ class CourseService:
 
     @classmethod
     def generate_lesson_content(cls, lesson_id, user_id):
-        lesson = Lesson.query.join(Module).join(Course).filter(Lesson.id == lesson_id, Course.user_id == user_id).first()
-        if not lesson:
-            raise Exception("Lesson not found or unauthorized")
+        logger.info(f"[/lesson/content] Incoming request for lesson_id={lesson_id}, user_id={user_id}")
+        try:
+            lesson = Lesson.query.join(Module).join(Course).filter(Lesson.id == lesson_id, Course.user_id == user_id).first()
+            if not lesson:
+                raise Exception("Lesson not found or unauthorized")
 
-        course = lesson.module.course
-        prompt = f"""
+            course = lesson.module.course
+            logger.info(f"[/lesson/content] Lesson ID: {lesson.id}, Course ID: {course.id}, Lesson Title: {lesson.title}")
+
+            prompt = f"""
         Generate deep, highly educational content for the following lesson:
         Course Topic: {course.goal}
         Module: {lesson.module.title}
@@ -329,17 +333,35 @@ class CourseService:
           "resources": ["Doc link 1", "YouTube link 2"]
         }}
         """
-        system_prompt = "You are a senior technical instructor. You generate rich, accurate, and deeply educational content in valid structured JSON."
-        
-        try:
-            res_text = GroqClient.chat_completion(
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": prompt}
-                ],
-                json_mode=True
-            )
-            content_data = json.loads(res_text.strip())
-            return content_data
+            system_prompt = "You are a senior technical instructor. You generate rich, accurate, and deeply educational content in valid structured JSON."
+            
+            logger.info(f"[/lesson/content] Generated Groq prompt:\n{prompt}")
+
+            try:
+                res_text = GroqClient.chat_completion(
+                    messages=[
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user", "content": prompt}
+                    ],
+                    json_mode=True
+                )
+                logger.info(f"[/lesson/content] Groq response (raw): {res_text}")
+                
+                try:
+                    content_data = json.loads(res_text.strip())
+                    logger.info(f"[/lesson/content] Parsed JSON: {json.dumps(content_data)}")
+                    logger.info("[/lesson/content] Final response successfully generated.")
+                    return content_data
+                except json.JSONDecodeError as je:
+                    logger.error(f"[/lesson/content] JSON parsing failed: {str(je)}")
+                    traceback.print_exc()
+                    raise Exception(f"JSON Parsing Error: {str(je)} - Raw Response: {res_text}")
+
+            except Exception as api_err:
+                logger.error(f"[/lesson/content] Groq API error: {str(api_err)}")
+                traceback.print_exc()
+                raise api_err
+                
         except Exception as e:
-            raise Exception(f"Failed to generate lesson content: {str(e)}")
+            traceback.print_exc()
+            raise e

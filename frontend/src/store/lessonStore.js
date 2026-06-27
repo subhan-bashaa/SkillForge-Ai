@@ -16,7 +16,7 @@ const useLessonStore = create((set, get) => ({
     // Otherwise, fetch from backend
     set({ loading: true, error: null });
     try {
-      const response = await api.get(`/api/lesson/${lessonId}/content`);
+      const response = await api.get(`/api/course/lesson/${lessonId}/content`);
       const generatedContent = response.data;
       
       set((prev) => ({
@@ -39,7 +39,7 @@ const useLessonStore = create((set, get) => ({
   regenerateLessonContent: async (lessonId) => {
     set({ loading: true, error: null });
     try {
-      const response = await api.get(`/api/lesson/${lessonId}/content`);
+      const response = await api.get(`/api/course/lesson/${lessonId}/content`);
       const generatedContent = response.data;
       
       set((prev) => ({
