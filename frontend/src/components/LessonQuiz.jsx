@@ -49,12 +49,12 @@ export default function LessonQuiz({ lessonId }) {
     if (!quiz || submitting) return;
     setSubmitting(true);
     
-    const questions = quiz.questions;
+    const questions = quiz?.questions || [];
     let correctCount = 0;
     
     questions.forEach((q, idx) => {
       const userAns = answers[idx];
-      if (userAns && userAns.trim().toLowerCase() === q.correct_answer.trim().toLowerCase()) {
+      if (userAns && userAns.trim().toLowerCase() === (q?.correct_answer ?? '').trim().toLowerCase()) {
         correctCount += 1;
       }
     });
@@ -197,16 +197,20 @@ export default function LessonQuiz({ lessonId }) {
           </button>
         </div>
         
-        {quiz.questions.map((q, idx) => {
+        {(!quiz?.questions || !Array.isArray(quiz?.questions)) ? (
+          <div className="bg-slate-905/30 border border-slate-850 p-6 rounded-2xl space-y-4 text-center text-rose-400 font-bold">
+            Invalid AI response. Please regenerate.
+          </div>
+        ) : quiz.questions.map((q, idx) => {
           const userAns = answers[idx] || 'Unanswered';
-          const isCorrect = userAns.trim().toLowerCase() === q.correct_answer.trim().toLowerCase();
+          const isCorrect = userAns.trim().toLowerCase() === (q?.correct_answer ?? '').trim().toLowerCase();
           
           return (
             <div key={idx} className="bg-slate-905/30 border border-slate-850 p-6 rounded-2xl space-y-4">
               <div className="flex justify-between items-start gap-4">
                 <h4 className="font-bold text-white text-sm leading-relaxed">
                   <span className="text-slate-500 mr-2">{idx + 1}.</span>
-                  {q.question}
+                  {q?.question ?? 'N/A'}
                 </h4>
                 {isCorrect ? (
                   <span className="text-[10px] text-emerald-400 font-bold bg-emerald-500/10 border border-emerald-500/20 px-2 py-1 rounded flex items-center gap-1 shrink-0 uppercase tracking-widest"><FiCheckCircle /> Correct</span>
@@ -216,9 +220,9 @@ export default function LessonQuiz({ lessonId }) {
               </div>
 
               <div className="space-y-2">
-                {q.options.map((opt, oIdx) => {
+                {(q?.options || []).map((opt, oIdx) => {
                   const isUserSelected = answers[idx] === opt;
-                  const isActuallyCorrect = opt.trim().toLowerCase() === q.correct_answer.trim().toLowerCase();
+                  const isActuallyCorrect = opt.trim().toLowerCase() === (q?.correct_answer ?? '').trim().toLowerCase();
                   
                   let optStyle = "bg-slate-950/40 border-slate-850/50 text-slate-400";
                   let icon = null;
@@ -244,7 +248,7 @@ export default function LessonQuiz({ lessonId }) {
                 <FiInfo className="w-4 h-4 text-indigo-400 shrink-0 mt-0.5" />
                 <div>
                   <strong className="text-indigo-400 font-bold uppercase tracking-wider text-[10px] block mb-1">Explanation</strong>
-                  {q.explanation}
+                  {q?.explanation ?? 'N/A'}
                 </div>
               </div>
             </div>
@@ -255,6 +259,26 @@ export default function LessonQuiz({ lessonId }) {
   }
 
   // Active Quiz View
+  if (!quiz?.questions || !Array.isArray(quiz?.questions)) {
+    return (
+      <div className="bg-slate-900/40 border border-slate-800/80 p-8 rounded-2xl flex flex-col items-center text-center space-y-4">
+        <div className="p-4 bg-rose-500/10 rounded-full mb-2">
+          <FiXCircle className="w-8 h-8 text-rose-400" />
+        </div>
+        <div>
+          <h3 className="font-extrabold text-white text-lg">Invalid AI Response</h3>
+          <p className="text-slate-400 text-sm mt-1 max-w-sm mx-auto">The AI failed to generate valid quiz questions. Please retry.</p>
+        </div>
+        <button
+          onClick={handleRetakeQuiz}
+          className="mt-4 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-sm px-6 py-3 rounded-xl shadow-lg shadow-indigo-500/10 flex items-center justify-center gap-2 cursor-pointer transition-colors"
+        >
+          <FiRefreshCw /> Retry Quiz
+        </button>
+      </div>
+    );
+  }
+
   const currentQ = quiz.questions[currentQuestionIndex];
   const isLastQuestion = currentQuestionIndex === quiz.questions.length - 1;
   const progressPercent = ((currentQuestionIndex + 1) / quiz.questions.length) * 100;
@@ -282,11 +306,11 @@ export default function LessonQuiz({ lessonId }) {
       {/* Question */}
       <div className="space-y-6">
         <h3 className="text-xl md:text-2xl font-bold text-white leading-relaxed">
-          {currentQ.question}
+          {currentQ?.question ?? 'Invalid question text'}
         </h3>
 
         <div className="grid grid-cols-1 gap-3">
-          {currentQ.options.map((option, idx) => {
+          {(currentQ?.options || []).map((option, idx) => {
             const isSelected = answers[currentQuestionIndex] === option;
             return (
               <button

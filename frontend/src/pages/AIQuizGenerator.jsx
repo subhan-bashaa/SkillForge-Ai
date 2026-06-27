@@ -129,7 +129,6 @@ export default function AIQuizGenerator() {
         answers: answers
       });
       setQuizResult(res.data);
-      // Reload leaderboard to show any XP increases
       fetchLeaderboard();
     } catch (err) {
       alert('Submit failed.');
@@ -140,23 +139,22 @@ export default function AIQuizGenerator() {
 
   const handleDownloadResult = () => {
     if (!quizResult) return;
-    // Create text report content
     let report = `====================================\n`;
     report += `SKILLFORGE AI - QUIZ REPORT CARD\n`;
     report += `====================================\n`;
-    report += `Quiz Title: ${quiz.title}\n`;
+    report += `Quiz Title: ${quiz?.title ?? 'Quiz'}\n`;
     report += `Date Attempted: ${new Date().toLocaleDateString()}\n`;
     report += `Final Score: ${quizResult.score}%\n`;
     report += `Questions Correct: ${quizResult.correct_count}/${quizResult.total_questions}\n`;
     report += `XP Points Awarded: +${quizResult.xp_gained} XP\n\n`;
     report += `Detailed Review:\n`;
     
-    quizResult.questions.forEach((q, idx) => {
-      const userAns = answers[q.id.toString()] || 'Unanswered';
-      report += `${idx + 1}. Question: ${q.question}\n`;
+    (quizResult.questions || []).forEach((q, idx) => {
+      const userAns = answers[q?.id?.toString()] || 'Unanswered';
+      report += `${idx + 1}. Question: ${q?.question ?? 'N/A'}\n`;
       report += `   Your Answer: ${userAns}\n`;
-      report += `   Correct Answer: ${q.correct_answer}\n`;
-      report += `   Explanation: ${q.explanation}\n\n`;
+      report += `   Correct Answer: ${q?.correct_answer ?? 'N/A'}\n`;
+      report += `   Explanation: ${q?.explanation ?? 'N/A'}\n\n`;
     });
 
     const blob = new Blob([report], { type: 'text/plain' });
@@ -245,20 +243,24 @@ export default function AIQuizGenerator() {
               </div>
 
               <div className="space-y-6">
-                {quiz.questions.map((q, qIdx) => (
-                  <div key={q.id} className="space-y-3 bg-slate-950/40 p-4 rounded-xl border border-slate-850/50">
-                    <span className="text-[9px] font-extrabold text-slate-500 uppercase tracking-widest block">Question {qIdx + 1} of {quiz.questions.length} • {q.type.replace('_', ' ').toUpperCase()}</span>
-                    <h4 className="font-bold text-white text-sm leading-relaxed">{q.question}</h4>
+                {(!quiz?.questions || !Array.isArray(quiz?.questions)) ? (
+                  <div className="text-center p-6 text-rose-400 font-bold">
+                    Invalid AI response. Please regenerate.
+                  </div>
+                ) : quiz.questions.map((q, qIdx) => (
+                  <div key={q?.id ?? qIdx} className="space-y-3 bg-slate-950/40 p-4 rounded-xl border border-slate-850/50">
+                    <span className="text-[9px] font-extrabold text-slate-500 uppercase tracking-widest block">Question {qIdx + 1} of {quiz.questions.length} • {(q?.type ?? 'mcq').replace('_', ' ').toUpperCase()}</span>
+                    <h4 className="font-bold text-white text-sm leading-relaxed">{q?.question ?? 'Invalid question text'}</h4>
                     
                     {/* Render Choices based on question type */}
-                    {q.type === 'mcq' || q.type === 'true_false' ? (
+                    {(!q?.type || q.type === 'mcq' || q.type === 'true_false') ? (
                       <div className="grid grid-cols-1 gap-2 pt-2">
-                        {q.options.map((option, oIdx) => {
-                          const isSelected = answers[q.id.toString()] === option;
+                        {(q?.options || []).map((option, oIdx) => {
+                          const isSelected = answers[q?.id?.toString()] === option;
                           return (
                             <button
                               key={oIdx}
-                              onClick={() => handleSelectAnswer(q.id.toString(), option)}
+                              onClick={() => handleSelectAnswer(q?.id?.toString(), option)}
                               className={`w-full text-left px-4 py-3 border text-xs font-semibold rounded-xl cursor-pointer transition-colors ${
                                 isSelected
                                   ? 'bg-indigo-600/10 border-indigo-500 text-indigo-400'
@@ -275,8 +277,8 @@ export default function AIQuizGenerator() {
                       <div className="pt-2">
                         <input
                           type="text"
-                          value={answers[q.id.toString()] || ''}
-                          onChange={(e) => handleSelectAnswer(q.id.toString(), e.target.value)}
+                          value={answers[q?.id?.toString()] || ''}
+                          onChange={(e) => handleSelectAnswer(q?.id?.toString(), e.target.value)}
                           placeholder="Type answer here..."
                           className="w-full bg-slate-900 border border-slate-800 focus:border-indigo-500 rounded-xl px-4 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none transition-colors"
                         />
@@ -356,13 +358,13 @@ export default function AIQuizGenerator() {
               {/* Graded Questions Explanations Review */}
               <div className="space-y-4">
                 <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest">Syllabus Explanations Review</h4>
-                {quizResult.questions.map((q, idx) => {
-                  const userAns = answers[q.id.toString()] || 'Unanswered';
-                  const isCorrect = userAns.trim().toLowerCase() === q.correct_answer.trim().toLowerCase();
+                {(quizResult.questions || []).map((q, idx) => {
+                  const userAns = answers[q?.id?.toString()] || 'Unanswered';
+                  const isCorrect = userAns.trim().toLowerCase() === (q?.correct_answer ?? '').trim().toLowerCase();
                   return (
-                    <div key={q.id} className="bg-slate-905/30 border border-slate-850 p-5 rounded-2xl space-y-3">
+                    <div key={q?.id ?? idx} className="bg-slate-905/30 border border-slate-850 p-5 rounded-2xl space-y-3">
                       <div className="flex justify-between items-start gap-2">
-                        <h4 className="font-bold text-white text-sm leading-relaxed">{idx + 1}. {q.question}</h4>
+                        <h4 className="font-bold text-white text-sm leading-relaxed">{idx + 1}. {q?.question ?? 'N/A'}</h4>
                         {isCorrect ? (
                           <span className="text-xs text-emerald-400 font-bold bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded flex items-center gap-1 flex-shrink-0"><FiCheckCircle /> Correct</span>
                         ) : (
@@ -377,7 +379,7 @@ export default function AIQuizGenerator() {
                         </div>
                         <div className="p-3 bg-slate-950 border border-slate-850/50 rounded-xl">
                           <span className="text-slate-500 block text-[9px] uppercase tracking-wider mb-0.5">Correct answer</span>
-                          <span className="text-indigo-400">{q.correct_answer}</span>
+                          <span className="text-indigo-400">{q?.correct_answer ?? 'N/A'}</span>
                         </div>
                       </div>
 
@@ -385,7 +387,7 @@ export default function AIQuizGenerator() {
                         <FiInfo className="w-4 h-4 text-indigo-400 flex-shrink-0 mt-0.5" />
                         <div>
                           <strong className="text-slate-300 font-bold">Explanation: </strong>
-                          {q.explanation}
+                          {q?.explanation ?? 'N/A'}
                         </div>
                       </div>
                     </div>

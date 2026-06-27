@@ -279,6 +279,9 @@ class AIService:
         system_prompt = "You are an automated technical quiz builder. You always output valid, structured JSON schemas and ensure the difficulty matches the context provided."
         try:
             res_text = call_groq_with_retry(prompt, system_prompt, json_mode=True)
+            print("--- RAW GROQ QUIZ RESPONSE ---")
+            print(res_text)
+            print("------------------------------")
             data = json.loads(res_text.strip())
             return data
         except Exception as e:

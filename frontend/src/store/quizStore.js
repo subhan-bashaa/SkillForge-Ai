@@ -17,6 +17,7 @@ const useQuizStore = create((set, get) => ({
     try {
       const response = await api.get(`/api/quiz/generate?lesson_id=${lessonId}`);
       const quizData = response.data;
+      console.log('--- PARSED QUIZ JSON ---', quizData);
       
       set((prev) => ({
         cache: {
@@ -40,6 +41,7 @@ const useQuizStore = create((set, get) => ({
     try {
       const response = await api.get(`/api/quiz/generate?lesson_id=${lessonId}`);
       const quizData = response.data;
+      console.log('--- PARSED QUIZ JSON ---', quizData);
       
       set((prev) => ({
         cache: {
